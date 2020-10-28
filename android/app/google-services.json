@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "698666145515",
+    "firebase_url": "https://ardent-gate-169118.firebaseio.com",
+    "project_id": "ardent-gate-169118",
+    "storage_bucket": "ardent-gate-169118.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698666145515:android:9aae637c95e9188478d0ae",
+        "android_client_info": {
+          "package_name": "com.example.memories"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "698666145515-uflntb15b0kg4dl0j2ab0rhmps95mcpu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzNctxXDCmtfR5EOhMgkmS8tLRGUTSoPE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "698666145515-uflntb15b0kg4dl0j2ab0rhmps95mcpu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -41,8 +41,11 @@ dependencies:
   #The Following Dependency is used to show Progress Bar in app:-
   progress_dialog: ^1.2.4
 
-  #The Following Dependency is used to make social media login functionality in app:-
+  #The Following Dependency is used to make social media login via Facebook in app:-
   flutter_facebook_login: ^3.0.0
+
+  #The Following Dependency is used to make social login via a GMAIL in app:-
+  google_sign_in: ^4.5.5
 
 dev_dependencies:
   flutter_test:
