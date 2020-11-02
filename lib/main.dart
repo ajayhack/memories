@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:memories/screens/login.dart';
-import 'package:memories/screens/dashboard.dart';
 
 Future<void> main() async {
-  //WidgetsFlutterBinding.ensureInitialized();
-  //SharedPreferences prefs = await SharedPreferences.getInstance();
-  //var loginStatus = prefs.getInt('isLogin') ?? 1;
-  //print(loginStatus);
-  runApp(MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Login()));
+  /*WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  var loginStatus = prefs.getInt('isLogin') ?? 1;
+  print(loginStatus);*/
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, home: Login()));
 }
 
 class MyApp extends StatelessWidget {

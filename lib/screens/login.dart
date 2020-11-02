@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
 import 'package:memories/screens/dashboard.dart';
 
 class Login extends StatefulWidget {
@@ -16,6 +19,9 @@ class UserLoginScreen extends State<Login> {
   final mobileNumberController = TextEditingController();
   final otpController = TextEditingController();
 
+  GoogleSignInAccount _currentUser;
+  String _contactText;
+
   GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: <String>[
       'email',
@@ -24,13 +30,27 @@ class UserLoginScreen extends State<Login> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account) {
+      setState(() {
+        _currentUser = account;
+      });
+      if (_currentUser != null) {
+        _handleGetContact();
+      }
+    });
+    _googleSignIn.signInSilently();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(brightness: Brightness.light, primaryColor: Colors.blue),
       home: Scaffold(
           appBar: AppBar(
-            title: Text('MaterialApp Demo Theme'),
+            title: Center(child: Text('Login')),
             automaticallyImplyLeading: false,
           ),
           body: getDisplayLoginView()),
@@ -39,18 +59,17 @@ class UserLoginScreen extends State<Login> {
 
   //Below method is used to show Memories App login Screen:-
   getDisplayLoginView() {
-    return Container(
-      child: Center(
+    return Center(
+      child: SingleChildScrollView(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
-              padding: EdgeInsets.only(left: 16, top: 0, right: 16, bottom: 0),
+              padding: EdgeInsets.only(left: 8, top: 0, right: 8, bottom: 0),
               child: Card(
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0)),
                 color: Colors.white,
-                elevation: 10.0,
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -108,7 +127,7 @@ class UserLoginScreen extends State<Login> {
                         height: 50,
                         child: RaisedButton(
                           textColor: Colors.white,
-                          color: Colors.green,
+                          color: Colors.blue,
                           onPressed: () {
                             //doLogin();
                           },
@@ -121,73 +140,79 @@ class UserLoginScreen extends State<Login> {
                         ),
                       ),
                     ),
+                    Padding(
+                        padding: EdgeInsets.only(
+                            left: 36, top: 16, right: 36, bottom: 16),
+                        child: Row(children: <Widget>[
+                          Expanded(
+                            child: Divider(),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: 10, top: 0, right: 10, bottom: 0),
+                            child: Text("OR",
+                                textDirection: TextDirection.ltr,
+                                style: TextStyle(
+                                    fontSize: 16.0,
+                                    fontStyle: FontStyle.normal)),
+                          ),
+                          Expanded(
+                            child: Divider(),
+                          ),
+                        ])),
+                    Padding(
+                      padding: EdgeInsets.only(
+                          left: 0, top: 16, right: 0, bottom: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          ButtonTheme(
+                            height: 50,
+                            child: RaisedButton.icon(
+                              onPressed: () => _facebookLogin(),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
+                              icon: Image.asset('assets/images/facebook.png'),
+                              label: Text(
+                                'Login via Facebook',
+                                textDirection: TextDirection.ltr,
+                                style: TextStyle(
+                                    fontSize: 16.0,
+                                    fontStyle: FontStyle.normal),
+                              ),
+                              textColor: Colors.blue,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(
+                                left: 16, top: 0, right: 0, bottom: 0),
+                            child: ButtonTheme(
+                              height: 50,
+                              child: RaisedButton.icon(
+                                onPressed: () => _gmailLogin(),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0))),
+                                icon: Image.asset('assets/images/gmail.png'),
+                                label: Text(
+                                  'Login via Gmail',
+                                  textDirection: TextDirection.ltr,
+                                  style: TextStyle(
+                                      fontSize: 16.0,
+                                      fontStyle: FontStyle.normal),
+                                ),
+                                textColor: Colors.red,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ),
-            ),
-            Padding(
-                padding:
-                    EdgeInsets.only(left: 36, top: 16, right: 36, bottom: 16),
-                child: Row(children: <Widget>[
-                  Divider(),
-                  Padding(
-                    padding:
-                        EdgeInsets.only(left: 10, top: 0, right: 10, bottom: 0),
-                    child: Text("OR",
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(
-                            fontSize: 16.0, fontStyle: FontStyle.normal)),
-                  ),
-                  Divider(),
-                ])),
-            Padding(
-              padding: EdgeInsets.only(left: 0, top: 16, right: 0, bottom: 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  ButtonTheme(
-                    height: 50,
-                    child: RaisedButton.icon(
-                      elevation: 10,
-                      onPressed: () => _facebookLogin(),
-                      shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(10.0))),
-                      icon: Image.asset('assets/images/facebook.png'),
-                      label: Text(
-                        'Login via Facebook',
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(
-                            fontSize: 16.0, fontStyle: FontStyle.normal),
-                      ),
-                      textColor: Colors.blue,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        EdgeInsets.only(left: 16, top: 0, right: 0, bottom: 0),
-                    child: ButtonTheme(
-                      height: 50,
-                      child: RaisedButton.icon(
-                        elevation: 10,
-                        onPressed: () => _gmailLogin(),
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0))),
-                        icon: Image.asset('assets/images/gmail.png'),
-                        label: Text(
-                          'Login via Gmail',
-                          textDirection: TextDirection.ltr,
-                          style: TextStyle(
-                              fontSize: 16.0, fontStyle: FontStyle.normal),
-                        ),
-                        textColor: Colors.red,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ],
@@ -250,6 +275,53 @@ class UserLoginScreen extends State<Login> {
         backgroundColor: validBackGroundColor,
         textColor: validTextColor,
         fontSize: 16.0);
+  }
+
+  Future<void> _handleGetContact() async {
+    setState(() {
+      _contactText = "Loading contact info...";
+    });
+
+    final http.Response response = await http.get(
+      'https://people.googleapis.com/v1/people/me/connections'
+          '?requestMask.includeField=person.names',
+      headers: await _currentUser.authHeaders,
+    );
+    if (response.statusCode != 200) {
+      setState(() {
+        _contactText = "People API gave a ${response.statusCode} "
+            "response. Check logs for details.";
+      });
+      print('People API ${response.statusCode} response: ${response.body}');
+      return;
+    }
+    final Map<String, dynamic> data = json.decode(response.body);
+    final String namedContact = _pickFirstNamedContact(data);
+    setState(() {
+      if (namedContact != null) {
+        _contactText = "I see you know $namedContact!";
+      } else {
+        _contactText = "No contacts to display.";
+      }
+    });
+  }
+
+  String _pickFirstNamedContact(Map<String, dynamic> data) {
+    final List<dynamic> connections = data['connections'];
+    final Map<String, dynamic> contact = connections?.firstWhere(
+          (dynamic contact) => contact['names'] != null,
+      orElse: () => null,
+    );
+    if (contact != null) {
+      final Map<String, dynamic> name = contact['names'].firstWhere(
+            (dynamic name) => name['displayName'] != null,
+        orElse: () => null,
+      );
+      if (name != null) {
+        return name['displayName'];
+      }
+    }
+    return null;
   }
 
   //Below method is used to sign out user from gmail login:-

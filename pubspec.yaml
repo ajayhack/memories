@@ -47,6 +47,9 @@ dependencies:
   #The Following Dependency is used to make social login via a GMAIL in app:-
   google_sign_in: ^4.5.5
 
+  #The Following Dependency is used to make HTTP Calls:-
+  http: ^0.12.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
