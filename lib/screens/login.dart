@@ -1,10 +1,10 @@
-import 'dart:convert';
-
+import 'package:device_apps/device_apps.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
 import 'package:memories/screens/dashboard.dart';
 
 class Login extends StatefulWidget {
@@ -18,29 +18,12 @@ class UserLoginScreen extends State<Login> {
   static final FacebookLogin facebookSignIn = new FacebookLogin();
   final mobileNumberController = TextEditingController();
   final otpController = TextEditingController();
-
-  GoogleSignInAccount _currentUser;
-  String _contactText;
-
-  GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: <String>[
-      'email',
-      'https://www.googleapis.com/auth/contacts.readonly',
-    ],
-  );
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn googleSignIn = GoogleSignIn();
 
   @override
   void initState() {
     super.initState();
-    _googleSignIn.onCurrentUserChanged.listen((GoogleSignInAccount account) {
-      setState(() {
-        _currentUser = account;
-      });
-      if (_currentUser != null) {
-        _handleGetContact();
-      }
-    });
-    _googleSignIn.signInSilently();
   }
 
   @override
@@ -62,30 +45,23 @@ class UserLoginScreen extends State<Login> {
     return Center(
       child: SingleChildScrollView(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Padding(
               padding: EdgeInsets.only(left: 8, top: 0, right: 8, bottom: 0),
               child: Card(
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0)),
-                color: Colors.white,
+                color: Colors.grey.shade300,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Text(
-                        'Memories',
-                        textDirection: TextDirection.ltr,
-                        style: TextStyle(
-                          fontSize: 24.0,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
+                        padding: EdgeInsets.all(8.0),
+                        child: Image.asset(
+                          "assets/images/memories.png",
+                          height: 60,
+                          width: 60,
+                        )),
                     Padding(
                       padding: EdgeInsets.only(
                           left: 16, top: 16, right: 16, bottom: 0),
@@ -99,25 +75,26 @@ class UserLoginScreen extends State<Login> {
                             fillColor: Colors.white,
                             filled: true,
                             labelText: 'Mobile Number',
+                            prefixText: "+91",
                             labelStyle: TextStyle(color: Colors.black)),
                       ),
                     ),
                     Padding(
                       padding: EdgeInsets.only(
-                          left: 16, top: 16, right: 16, bottom: 0),
-                      child: TextField(
-                        obscureText: true,
-                        maxLength: 4,
-                        controller: otpController,
-                        style: TextStyle(color: Colors.black, fontSize: 16.0),
-                        keyboardType: TextInputType.text,
-                        decoration: InputDecoration(
-                            border: OutlineInputBorder(),
-                            fillColor: Colors.white,
-                            filled: true,
-                            labelText: 'OTP',
-                            labelStyle: TextStyle(color: Colors.black)),
-                      ),
+                          left: 16, top: 0, right: 16, bottom: 0),
+                      child: Row(children: <Widget>[
+                        Icon(Icons.info, color: Colors.black54, size: 15),
+                        SizedBox(width: 8.0),
+                        Text(
+                          'We Will Send One Time Password to this Mobile Number',
+                          textDirection: TextDirection.ltr,
+                          style: TextStyle(
+                            fontSize: 12.0,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ]),
                     ),
                     Padding(
                       padding: EdgeInsets.only(
@@ -132,7 +109,7 @@ class UserLoginScreen extends State<Login> {
                             //doLogin();
                           },
                           child: Text(
-                            'Login',
+                            'Send OTP',
                             textDirection: TextDirection.ltr,
                             style: TextStyle(
                                 fontSize: 16.0, fontStyle: FontStyle.normal),
@@ -172,7 +149,7 @@ class UserLoginScreen extends State<Login> {
                               onPressed: () => _facebookLogin(),
                               shape: RoundedRectangleBorder(
                                   borderRadius:
-                                      BorderRadius.all(Radius.circular(10.0))),
+                                  BorderRadius.all(Radius.circular(10.0))),
                               icon: Image.asset('assets/images/facebook.png'),
                               label: Text(
                                 'Login via Facebook',
@@ -223,12 +200,13 @@ class UserLoginScreen extends State<Login> {
 
   //Below method is used to start login via Facebook:-
   Future<Null> _facebookLogin() async {
-    final FacebookLoginResult result = await facebookSignIn.logIn(['email']);
-
-    switch (result.status) {
-      case FacebookLoginStatus.loggedIn:
-        final FacebookAccessToken accessToken = result.accessToken;
-        showToast('''
+    bool isInstalled = await DeviceApps.isAppInstalled('com.facebook.katana');
+    if (isInstalled) {
+      final FacebookLoginResult result = await facebookSignIn.logIn(['email']);
+      switch (result.status) {
+        case FacebookLoginStatus.loggedIn:
+          final FacebookAccessToken accessToken = result.accessToken;
+          showToast('''
          Logged in!
          Token: ${accessToken.token}
          User id: ${accessToken.userId}
@@ -236,33 +214,68 @@ class UserLoginScreen extends State<Login> {
          Permissions: ${accessToken.permissions}
          Declined permissions: ${accessToken.declinedPermissions}
          ''', Colors.green, Colors.white);
-        navigateUser(Dashboard());
-        break;
-      case FacebookLoginStatus.cancelledByUser:
-        showToast('Login cancelled by the user.', Colors.red, Colors.white);
-        break;
-      case FacebookLoginStatus.error:
-        showToast(
-            'Something went wrong with the login process.\n'
-                'Here\'s the error Facebook gave us: ${result.errorMessage}',
-            Colors.red,
-            Colors.white);
-        break;
+          navigateUser(Dashboard());
+          break;
+        case FacebookLoginStatus.cancelledByUser:
+          showToast('Login cancelled by the user.', Colors.red, Colors.white);
+          break;
+        case FacebookLoginStatus.error:
+          showToast(
+              'Something went wrong with the login process.\n'
+                  'Here\'s the error Facebook gave us: ${result.errorMessage}',
+              Colors.red,
+              Colors.white);
+          break;
+      }
+    } else {
+      print("Login via Facebook not possible");
     }
   }
 
   //Below method is used to make social login via GMAIL:-
   Future<void> _gmailLogin() async {
     try {
-      await _googleSignIn
-          .signIn()
-          .then((value) =>
-          showToast(
-              'Login Success via a Gmail.', Colors.green, Colors.white))
-          .then((value) => navigateUser(Dashboard()));
+      signInWithGoogle().then((value) =>
+          showToast('Login Success via a Gmail.', Colors.green, Colors.white));
+      /*.then((value) => navigateUser(Dashboard()));*/
     } catch (error) {
       print(error);
     }
+  }
+
+  //Below method is used to signInWithGoogle using Firebase :-
+  Future<String> signInWithGoogle() async {
+    await Firebase.initializeApp();
+
+    final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
+    final GoogleSignInAuthentication googleSignInAuthentication =
+    await googleSignInAccount.authentication;
+
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleSignInAuthentication.accessToken,
+      idToken: googleSignInAuthentication.idToken,
+    );
+
+    final UserCredential authResult =
+    await _auth.signInWithCredential(credential);
+    final User user = authResult.user;
+    showToast("Name:- " + user.displayName + "\n" + "Email:- " + user.email,
+        Colors.green, Colors.white);
+    if (user != null) {
+      assert(!user.isAnonymous);
+      assert(await user.getIdToken() != null);
+
+      final User currentUser = _auth.currentUser;
+      assert(user.uid == currentUser.uid);
+
+      print('signInWithGoogle succeeded: $user');
+      showToast("Name:- " + user.displayName + "\n" + "Email:- " + user.email,
+          Colors.green, Colors.white);
+
+      return '$user';
+    }
+
+    return null;
   }
 
   //Below method is used to show Toast Message in App:-
@@ -276,56 +289,6 @@ class UserLoginScreen extends State<Login> {
         textColor: validTextColor,
         fontSize: 16.0);
   }
-
-  Future<void> _handleGetContact() async {
-    setState(() {
-      _contactText = "Loading contact info...";
-    });
-
-    final http.Response response = await http.get(
-      'https://people.googleapis.com/v1/people/me/connections'
-          '?requestMask.includeField=person.names',
-      headers: await _currentUser.authHeaders,
-    );
-    if (response.statusCode != 200) {
-      setState(() {
-        _contactText = "People API gave a ${response.statusCode} "
-            "response. Check logs for details.";
-      });
-      print('People API ${response.statusCode} response: ${response.body}');
-      return;
-    }
-    final Map<String, dynamic> data = json.decode(response.body);
-    final String namedContact = _pickFirstNamedContact(data);
-    setState(() {
-      if (namedContact != null) {
-        _contactText = "I see you know $namedContact!";
-      } else {
-        _contactText = "No contacts to display.";
-      }
-    });
-  }
-
-  String _pickFirstNamedContact(Map<String, dynamic> data) {
-    final List<dynamic> connections = data['connections'];
-    final Map<String, dynamic> contact = connections?.firstWhere(
-          (dynamic contact) => contact['names'] != null,
-      orElse: () => null,
-    );
-    if (contact != null) {
-      final Map<String, dynamic> name = contact['names'].firstWhere(
-            (dynamic name) => name['displayName'] != null,
-        orElse: () => null,
-      );
-      if (name != null) {
-        return name['displayName'];
-      }
-    }
-    return null;
-  }
-
-  //Below method is used to sign out user from gmail login:-
-  Future<void> _gmailSignOut() => _googleSignIn.disconnect();
 
   //Below method is used to navigate user to Dashboard Screen:-
   navigateUser(Widget screen) {
