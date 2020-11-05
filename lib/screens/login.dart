@@ -6,6 +6,7 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:memories/screens/dashboard.dart';
+import 'package:memories/screens/otpverification.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -69,7 +70,7 @@ class UserLoginScreen extends State<Login> {
                         maxLength: 10,
                         controller: mobileNumberController,
                         style: TextStyle(color: Colors.black, fontSize: 16.0),
-                        keyboardType: TextInputType.text,
+                        keyboardType: TextInputType.number,
                         decoration: InputDecoration(
                             border: OutlineInputBorder(),
                             fillColor: Colors.white,
@@ -106,7 +107,7 @@ class UserLoginScreen extends State<Login> {
                           textColor: Colors.white,
                           color: Colors.blue,
                           onPressed: () {
-                            //doLogin();
+                            _sendOTP();
                           },
                           child: Text(
                             'Send OTP',
@@ -278,6 +279,23 @@ class UserLoginScreen extends State<Login> {
     return null;
   }
 
+  //Below method is used to request OTP from Firebase on the entered number and Navigate user to OTP verification Screen:-
+  _sendOTP() {
+    if (mobileNumberController.text.isNotEmpty &&
+        mobileNumberController.text.length == 10) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => OTPVerification(
+                  mobileNumber: mobileNumberController.text,
+                )),
+      );
+    } else {
+      showToast("Mobile Number Field Should be a valid 10 Digit Number",
+          Colors.red, Colors.white);
+    }
+  }
+
   //Below method is used to show Toast Message in App:-
   showToast(String validMsg, Color validBackGroundColor, Color validTextColor) {
     Fluttertoast.showToast(
@@ -291,10 +309,8 @@ class UserLoginScreen extends State<Login> {
   }
 
   //Below method is used to navigate user to Dashboard Screen:-
-  navigateUser(Widget screen) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => screen),
-    );
-  }
+  navigateUser(Widget screen) => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => screen),
+      );
 }
