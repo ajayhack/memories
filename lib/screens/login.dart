@@ -6,7 +6,7 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:memories/screens/dashboard.dart';
-import 'package:memories/screens/otpverification.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -21,6 +21,7 @@ class UserLoginScreen extends State<Login> {
   final otpController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  ProgressDialog progressDialog;
 
   @override
   void initState() {
@@ -150,7 +151,7 @@ class UserLoginScreen extends State<Login> {
                               onPressed: () => _facebookLogin(),
                               shape: RoundedRectangleBorder(
                                   borderRadius:
-                                  BorderRadius.all(Radius.circular(10.0))),
+                                      BorderRadius.all(Radius.circular(10.0))),
                               icon: Image.asset('assets/images/facebook.png'),
                               label: Text(
                                 'Login via Facebook',
@@ -283,13 +284,8 @@ class UserLoginScreen extends State<Login> {
   _sendOTP() {
     if (mobileNumberController.text.isNotEmpty &&
         mobileNumberController.text.length == 10) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => OTPVerification(
-                  mobileNumber: mobileNumberController.text,
-                )),
-      );
+      print(mobileNumberController.text);
+      _registerUser("+91 ${mobileNumberController.text}");
     } else {
       showToast("Mobile Number Field Should be a valid 10 Digit Number",
           Colors.red, Colors.white);
@@ -309,8 +305,115 @@ class UserLoginScreen extends State<Login> {
   }
 
   //Below method is used to navigate user to Dashboard Screen:-
-  navigateUser(Widget screen) => Navigator.pushReplacement(
+  navigateUser(Widget screen) =>
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => screen),
       );
+
+  //Below method is used to Verify Phone Number and Generate OTP with Firebase Authentication:-
+  Future _registerUser(String mobile) async {
+    FirebaseAuth _auth = FirebaseAuth.instance;
+    progressDialog = ProgressDialog(context,
+        type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
+    await progressDialog.show();
+
+    _auth.verifyPhoneNumber(
+      phoneNumber: mobile,
+      timeout: Duration(seconds: 30),
+      verificationCompleted: (AuthCredential authCredential) {
+        print(authCredential.token);
+      },
+      verificationFailed: (FirebaseAuthException authException) {
+        print(authException.message);
+      },
+      codeSent: (String verificationId, [int forceResendingToken]) async {
+        //show dialog to take input from the user
+        await progressDialog.hide();
+        _showDialogAndVerifyOTP(verificationId);
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {
+        verificationId = verificationId;
+        print(verificationId);
+        print("Timeout");
+        if (progressDialog.isShowing()) {
+          Navigator.pop(context);
+        }
+        showToast("TimeOut , Please try again....", Colors.red, Colors.white);
+      },
+    );
+  }
+
+  //Below method is used to show OTP Dialog and Verify it from Firebase:-
+  _showDialogAndVerifyOTP(String verificationID) {
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>
+            AlertDialog(
+              title: Text(
+                'Enter OTP Code Here',
+                textDirection: TextDirection.ltr,
+                style: TextStyle(
+                    fontSize: 16.0,
+                    color: Colors.black,
+                    fontStyle: FontStyle.normal),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  TextField(
+                      maxLength: 6,
+                      controller: otpController,
+                      style: TextStyle(color: Colors.black, fontSize: 16.0),
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                          border: OutlineInputBorder(),
+                          fillColor: Colors.white,
+                          filled: true,
+                          labelText: 'OTP',
+                          labelStyle: TextStyle(color: Colors.black))),
+                ],
+              ),
+              actions: <Widget>[
+                RaisedButton(
+                  child: Text("Cancel"),
+                  textColor: Colors.white,
+                  color: Colors.red,
+                  onPressed: () =>
+                  {
+                    Navigator.pop(context),
+                    showToast(
+                        "OTP Canceled , Please try again.....", Colors.red,
+                        Colors.white)
+                  },
+                ),
+
+                RaisedButton(
+                  child: Text("Done"),
+                  textColor: Colors.white,
+                  color: Colors.blue,
+                  onPressed: () {
+                    FirebaseAuth auth = FirebaseAuth.instance;
+                    String smsCode = otpController.text.trim();
+                    var _credential = PhoneAuthProvider.credential(
+                        verificationId: verificationID, smsCode: smsCode);
+
+                    auth.signInWithCredential(_credential)
+                        .then((value) =>
+                    {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => Dashboard()),
+                      ),
+                    })
+                        .catchError((e) {
+                      print(e);
+                    });
+                  },
+                )
+              ],
+            ));
+  }
 }
