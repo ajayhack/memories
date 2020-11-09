@@ -6,7 +6,9 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:memories/screens/dashboard.dart';
+import 'package:memories/utils/constant.dart';
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -314,6 +316,7 @@ class UserLoginScreen extends State<Login> {
   //Below method is used to Verify Phone Number and Generate OTP with Firebase Authentication:-
   Future _registerUser(String mobile) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
+    _auth.setSettings(appVerificationDisabledForTesting: true);
     progressDialog = ProgressDialog(context,
         type: ProgressDialogType.Normal, isDismissible: true, showLogs: false);
     await progressDialog.show();
@@ -339,7 +342,7 @@ class UserLoginScreen extends State<Login> {
         if (progressDialog.isShowing()) {
           Navigator.pop(context);
         }
-        showToast("TimeOut , Please try again....", Colors.red, Colors.white);
+        //showToast("TimeOut , Please try again....", Colors.red, Colors.white);
       },
     );
   }
@@ -383,37 +386,52 @@ class UserLoginScreen extends State<Login> {
                   onPressed: () =>
                   {
                     Navigator.pop(context),
-                    showToast(
-                        "OTP Canceled , Please try again.....", Colors.red,
-                        Colors.white)
+                    showToast("OTP Canceled , Please try again.....",
+                        Colors.red, Colors.white)
                   },
                 ),
-
                 RaisedButton(
                   child: Text("Done"),
                   textColor: Colors.white,
                   color: Colors.blue,
-                  onPressed: () {
-                    FirebaseAuth auth = FirebaseAuth.instance;
-                    String smsCode = otpController.text.trim();
-                    var _credential = PhoneAuthProvider.credential(
-                        verificationId: verificationID, smsCode: smsCode);
-
-                    auth.signInWithCredential(_credential)
-                        .then((value) =>
-                    {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => Dashboard()),
-                      ),
-                    })
-                        .catchError((e) {
-                      print(e);
-                    });
-                  },
+                  onPressed: () => _submitOTP(verificationID),
                 )
               ],
             ));
+  }
+
+  //Below method is used to submit OTP  , Verify OTP and Navigate user to Dashboard:-
+  _submitOTP(String verificationID) async {
+    await progressDialog.show();
+    FirebaseAuth auth = FirebaseAuth.instance;
+    String smsCode = otpController.text.trim();
+    var _credential = PhoneAuthProvider.credential(
+        verificationId: verificationID, smsCode: smsCode);
+
+    auth
+        .signInWithCredential(_credential)
+        .then((value) async => {
+              await progressDialog.hide(),
+              _saveLoginStatus(LoginType.OTP.index),
+            })
+        .then(
+          (value) => Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Dashboard()),
+          ),
+        )
+        .catchError((e) {
+      print(e);
+    });
+  }
+
+  //Below method is used to set login status in Shared Preference:-
+  _saveLoginStatus(int loginType) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool("isLogin", true);
+    prefs.setInt('loginType', loginType);
+
+    print(prefs.getBool("isLogin"));
+    print(prefs.getInt("loginType"));
   }
 }
