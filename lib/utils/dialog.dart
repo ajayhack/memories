@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:memories/utils/constant.dart';
+import 'package:memories/utils/enumutils.dart';
 
 class DialogHelper {
-  //Below method is used to show OTP Dialog and Verify it from Firebase:-
+  //region Below method is used to show OTP Dialog and Verify it from Firebase:-
   popUpDialog(String titleText, String message, BuildContext context, int type,
       Function positiveButtonCB) {
     showDialog(
@@ -41,4 +41,5 @@ class DialogHelper {
               ],
             ));
   }
+//endregion
 }

@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:memories/screens/addmemories.dart';
 import 'package:memories/screens/login.dart';
-import 'package:memories/utils/constant.dart';
+import 'package:memories/utils/bottomsheet.dart';
 import 'package:memories/utils/dialog.dart';
+import 'package:memories/utils/enumutils.dart';
 import 'package:memories/utils/toast.dart';
 import 'package:scroll_app_bar/scroll_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -19,6 +24,9 @@ class DashboardScreen extends State<Dashboard> {
   int _selectedIndex = 0;
   ToastHelper toastHelper = new ToastHelper();
   DialogHelper dialogHelper = new DialogHelper();
+  BottomSheetDialog bottomSheetDialog = new BottomSheetDialog();
+  File _image;
+  final picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +66,14 @@ class DashboardScreen extends State<Dashboard> {
     );
   }
 
-  //Below method is used to show Memories App login Screen:-
+  //region Below method is used to show Memories App login Screen:-
   _displayMemoriesList() {
     Center(child: Text("Memories Data will be here Soon......"));
   }
 
-  //Below method is to handle bottom navigation onClick:-
+  //endregion
+
+  //region Below method is to handle bottom navigation onClick:-
   _onBottomNavigationTapped(int index) {
     setState(() {
       if (index == 0) {
@@ -71,6 +81,7 @@ class DashboardScreen extends State<Dashboard> {
         //ToastHelper().showToast("Clicked on Home", Colors.green, Colors.white);
       } else if (index == 1) {
         //OnClick of Add Memories.....
+        _openImageChooser();
       } else if (index == 2) {
         //OnClick of Liked Memories.....
       } else {
@@ -79,12 +90,14 @@ class DashboardScreen extends State<Dashboard> {
             "Do you want to Logout from App?",
             context,
             DialogType.LOGOUT.index,
-            () => _logout());
+                () => _logout());
       }
     });
   }
 
-  //Below method is used to logout user via a medium by which he/she use to login in:-
+  //endregion
+
+  //region Below method is used to logout user via a medium by which he/she use to login in:-
   _logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var loginType = prefs.getInt('loginType');
@@ -99,4 +112,44 @@ class DashboardScreen extends State<Dashboard> {
           ),
         });
   }
+
+  //endregion
+
+  //region Below method is used to open Image Chooser:-
+  _openImageChooser() {
+    navigateUser(AddMemories());
+    //bottomSheetDialog.showChooser(context , (index) => getImage(index));
+  }
+
+  //endregion
+
+  //region Image Chooser From Camera:-
+  Future getImage(int index) async {
+    print("Camera Started....");
+    print(index);
+    var pickedFile;
+    if (index == 0) {
+      pickedFile = await picker.getImage(source: ImageSource.camera);
+    } else {
+      pickedFile = await picker.getImage(source: ImageSource.gallery);
+    }
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path);
+        print("Image File:- $_image");
+      } else {
+        print('No image selected.');
+      }
+    });
+  }
+
+  //endregion
+
+  //region Below method is used to navigate user to Add Memories Screen:-
+  navigateUser(Widget screen) => Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => screen),
+      );
+//endregion
 }

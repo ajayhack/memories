@@ -6,7 +6,7 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:memories/screens/dashboard.dart';
-import 'package:memories/utils/constant.dart';
+import 'package:memories/utils/enumutils.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,7 +44,7 @@ class UserLoginScreen extends State<Login> {
     );
   }
 
-  //Below method is used to show Memories App login Screen:-
+  //region Below method is used to show Memories App login Screen:-
   getDisplayLoginView() {
     return Center(
       child: SingleChildScrollView(
@@ -202,7 +202,9 @@ class UserLoginScreen extends State<Login> {
     );
   }
 
-  //Below method is used to start login via Facebook:-
+  //endregion
+
+  //region Below method is used to start login via Facebook:-
   Future<Null> _facebookLogin() async {
     bool isInstalled = await DeviceApps.isAppInstalled('com.facebook.katana');
     if (isInstalled) {
@@ -236,7 +238,9 @@ class UserLoginScreen extends State<Login> {
     }
   }
 
-  //Below method is used to make social login via GMAIL:-
+  //endregion
+
+  //region Below method is used to make social login via GMAIL:-
   Future<void> _gmailLogin() async {
     try {
       signInWithGoogle().then((value) =>
@@ -247,7 +251,9 @@ class UserLoginScreen extends State<Login> {
     }
   }
 
-  //Below method is used to signInWithGoogle using Firebase :-
+  //endregion
+
+  //region Below method is used to signInWithGoogle using Firebase :-
   Future<String> signInWithGoogle() async {
     await Firebase.initializeApp();
 
@@ -282,7 +288,9 @@ class UserLoginScreen extends State<Login> {
     return null;
   }
 
-  //Below method is used to request OTP from Firebase on the entered number and Navigate user to OTP verification Screen:-
+  //endregion
+
+  //region Below method is used to request OTP from Firebase on the entered number and Navigate user to OTP verification Screen:-
   _sendOTP() {
     if (mobileNumberController.text.isNotEmpty &&
         mobileNumberController.text.length == 10) {
@@ -294,7 +302,9 @@ class UserLoginScreen extends State<Login> {
     }
   }
 
-  //Below method is used to show Toast Message in App:-
+  //endregion
+
+  //region Below method is used to show Toast Message in App:-
   showToast(String validMsg, Color validBackGroundColor, Color validTextColor) {
     Fluttertoast.showToast(
         msg: validMsg,
@@ -306,14 +316,17 @@ class UserLoginScreen extends State<Login> {
         fontSize: 16.0);
   }
 
-  //Below method is used to navigate user to Dashboard Screen:-
-  navigateUser(Widget screen) =>
-      Navigator.pushReplacement(
+  //endregion
+
+  //region Below method is used to navigate user to Dashboard Screen:-
+  navigateUser(Widget screen) => Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => screen),
       );
 
-  //Below method is used to Verify Phone Number and Generate OTP with Firebase Authentication:-
+  //endregion
+
+  //region Below method is used to Verify Phone Number and Generate OTP with Firebase Authentication:-
   Future _registerUser(String mobile) async {
     FirebaseAuth _auth = FirebaseAuth.instance;
     _auth.setSettings(appVerificationDisabledForTesting: true);
@@ -347,7 +360,9 @@ class UserLoginScreen extends State<Login> {
     );
   }
 
-  //Below method is used to show OTP Dialog and Verify it from Firebase:-
+  //endregion
+
+  //region Below method is used to show OTP Dialog and Verify it from Firebase:-
   _showDialogAndVerifyOTP(String verificationID) {
     showDialog(
         context: context,
@@ -400,7 +415,9 @@ class UserLoginScreen extends State<Login> {
             ));
   }
 
-  //Below method is used to submit OTP  , Verify OTP and Navigate user to Dashboard:-
+  //endregion
+
+  //region Below method is used to submit OTP  , Verify OTP and Navigate user to Dashboard:-
   _submitOTP(String verificationID) async {
     await progressDialog.show();
     FirebaseAuth auth = FirebaseAuth.instance;
@@ -425,7 +442,9 @@ class UserLoginScreen extends State<Login> {
     });
   }
 
-  //Below method is used to set login status in Shared Preference:-
+  //endregion
+
+  //region Below method is used to set login status in Shared Preference:-
   _saveLoginStatus(int loginType) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setBool("isLogin", true);
@@ -434,4 +453,5 @@ class UserLoginScreen extends State<Login> {
     print(prefs.getBool("isLogin"));
     print(prefs.getInt("loginType"));
   }
+//endregion
 }
