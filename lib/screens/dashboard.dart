@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,8 +26,14 @@ class DashboardScreen extends State<Dashboard> {
   ToastHelper toastHelper = new ToastHelper();
   DialogHelper dialogHelper = new DialogHelper();
   BottomSheetDialog bottomSheetDialog = new BottomSheetDialog();
+  final databaseReference = FirebaseFirestore.instance;
   File _image;
   final picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,8 +124,7 @@ class DashboardScreen extends State<Dashboard> {
 
   //region Below method is used to open Image Chooser:-
   _openImageChooser() {
-    navigateUser(AddMemories());
-    //bottomSheetDialog.showChooser(context , (index) => getImage(index));
+    bottomSheetDialog.showChooser(context, (index) => getImage(index));
   }
 
   //endregion
@@ -138,6 +144,9 @@ class DashboardScreen extends State<Dashboard> {
       if (pickedFile != null) {
         _image = File(pickedFile.path);
         print("Image File:- $_image");
+        navigateUser(AddMemories(
+          pickedImagePath: _image.path,
+        ));
       } else {
         print('No image selected.');
       }

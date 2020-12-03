@@ -1,21 +1,38 @@
+import 'dart:io';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:memories/screens/dashboard.dart';
+import 'package:scroll_app_bar/scroll_app_bar.dart';
 
 class AddMemories extends StatefulWidget {
+  final String pickedImagePath;
+
+  AddMemories({Key key, @required this.pickedImagePath}) : super(key: key);
+
   @override
   State<StatefulWidget> createState() {
-    return MemoriesPage();
+    return MemoriesPage(pickedImagePath);
   }
 }
 
 class MemoriesPage extends State<AddMemories> {
   final descriptionController = TextEditingController();
+  final scrollController = ScrollController();
+  final databaseReference = FirebaseFirestore.instance;
+  String imagePath;
+
+  MemoriesPage(String path) {
+    imagePath = path;
+    print('Picked Image Path:- $imagePath');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
+      appBar: ScrollAppBar(
+        controller: scrollController,
         backgroundColor: Colors.red,
         leading: IconButton(
             icon: Icon(Icons.clear, color: Colors.white),
@@ -30,7 +47,11 @@ class MemoriesPage extends State<AddMemories> {
         actions: <Widget>[
           IconButton(
               icon: Icon(Icons.check, color: Colors.white),
-              onPressed: () => {print("Memories Data Saved")})
+              onPressed: () =>
+              {
+                _createMemories(
+                    imagePath, descriptionController.text.toString())
+              })
         ],
       ),
       body: _getDisplayAddMemoriesView(),
@@ -43,7 +64,7 @@ class MemoriesPage extends State<AddMemories> {
       child: Column(
         children: <Widget>[
           Padding(
-            padding: EdgeInsets.only(left: 8, top: 0, right: 8, bottom: 0),
+            padding: EdgeInsets.all(16),
             child: Card(
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -52,26 +73,23 @@ class MemoriesPage extends State<AddMemories> {
               child: Column(
                 children: <Widget>[
                   Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: Image.asset(
-                        "assets/images/memories.png",
-                        height: 60,
-                        width: 60,
-                      )),
+                    padding: EdgeInsets.all(16.0),
+                    child: Image.file(File(imagePath),
+                      width: double.infinity,
+                    ),
+                  ),
                   Text(
-                    '01 Dec 2020',
+                    '${DateTime.now()}',
                     textDirection: TextDirection.ltr,
                     style: TextStyle(
-                      fontSize: 12.0,
+                      fontSize: 14.0,
                       fontStyle: FontStyle.normal,
                       color: Colors.black54,
                     ),
                   ),
                   Padding(
-                    padding: EdgeInsets.only(
-                        left: 16, top: 16, right: 16, bottom: 0),
+                    padding: EdgeInsets.all(16),
                     child: TextField(
-                      maxLength: 10,
                       controller: descriptionController,
                       style: TextStyle(color: Colors.black, fontSize: 16.0),
                       keyboardType: TextInputType.text,
@@ -83,28 +101,6 @@ class MemoriesPage extends State<AddMemories> {
                           labelStyle: TextStyle(color: Colors.black)),
                     ),
                   ),
-                  Padding(
-                    padding:
-                        EdgeInsets.only(left: 16, top: 0, right: 0, bottom: 0),
-                    child: ButtonTheme(
-                      height: 50,
-                      child: RaisedButton.icon(
-                        onPressed: () => {},
-                        shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.all(Radius.circular(10.0))),
-                        icon: Icon(Icons.check),
-                        label: Text(
-                          'Submit',
-                          textDirection: TextDirection.ltr,
-                          style: TextStyle(
-                              fontSize: 16.0, fontStyle: FontStyle.normal),
-                        ),
-                        textColor: Colors.red,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -112,6 +108,37 @@ class MemoriesPage extends State<AddMemories> {
         ],
       ),
     );
+  }
+
+//endregion
+
+//region Below method is used to save memories data:-
+  _createMemories(String imagePath, String description) async {
+    if (imagePath.isNotEmpty && descriptionController.text
+        .toString()
+        .isNotEmpty) {
+      await databaseReference.collection("Memories")
+          .doc("record")
+          .set({
+        'imagePath': imagePath,
+        'description': description
+      }).then((value) =>
+          _getData()
+        //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Dashboard()),)
+      );
+    } else {
+      print("Save Error");
+    }
+  }
+
+//endregion
+
+//region Below method is used to get Memories Data:-
+  _getData() async {
+    var data = await databaseReference.collection("Memories")
+        .doc("record")
+        .get();
+    print(data);
   }
 //endregion
 }
