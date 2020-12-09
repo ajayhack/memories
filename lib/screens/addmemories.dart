@@ -47,11 +47,10 @@ class MemoriesPage extends State<AddMemories> {
         actions: <Widget>[
           IconButton(
               icon: Icon(Icons.check, color: Colors.white),
-              onPressed: () =>
-              {
-                _createMemories(
-                    imagePath, descriptionController.text.toString())
-              })
+              onPressed: () => {
+                    _createMemories(
+                        imagePath, descriptionController.text.toString())
+                  })
         ],
       ),
       body: _getDisplayAddMemoriesView(),
@@ -74,7 +73,8 @@ class MemoriesPage extends State<AddMemories> {
                 children: <Widget>[
                   Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Image.file(File(imagePath),
+                    child: Image.file(
+                      File(imagePath),
                       width: double.infinity,
                     ),
                   ),
@@ -114,31 +114,20 @@ class MemoriesPage extends State<AddMemories> {
 
 //region Below method is used to save memories data:-
   _createMemories(String imagePath, String description) async {
-    if (imagePath.isNotEmpty && descriptionController.text
-        .toString()
-        .isNotEmpty) {
-      await databaseReference.collection("Memories")
-          .doc("record")
-          .set({
+    if (imagePath.isNotEmpty &&
+        descriptionController.text
+            .toString()
+            .isNotEmpty) {
+      await databaseReference.collection("Memories").add({
         'imagePath': imagePath,
         'description': description
       }).then((value) =>
-          _getData()
-        //Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Dashboard()),)
+          Navigator.pushReplacement(
+            context, MaterialPageRoute(builder: (context) => Dashboard()),)
       );
     } else {
       print("Save Error");
     }
-  }
-
-//endregion
-
-//region Below method is used to get Memories Data:-
-  _getData() async {
-    var data = await databaseReference.collection("Memories")
-        .doc("record")
-        .get();
-    print(data);
   }
 //endregion
 }

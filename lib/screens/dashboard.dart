@@ -27,12 +27,14 @@ class DashboardScreen extends State<Dashboard> {
   DialogHelper dialogHelper = new DialogHelper();
   BottomSheetDialog bottomSheetDialog = new BottomSheetDialog();
   final databaseReference = FirebaseFirestore.instance;
+  Map<String, dynamic> dataMap = Map();
   File _image;
   final picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    _getMemoriesData();
   }
 
   @override
@@ -75,7 +77,41 @@ class DashboardScreen extends State<Dashboard> {
 
   //region Below method is used to show Memories App login Screen:-
   _displayMemoriesList() {
-    Center(child: Text("Memories Data will be here Soon......"));
+    return GridView.count(
+      crossAxisCount: 2,
+      children: List.generate(dataMap.length, (index) {
+        return Container(
+          child: Card(
+            color: Colors.blue,
+            child: Column(
+              children: <Widget>[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8.0),
+                  child: Image.file(
+                    File(dataMap["imagePath"]),
+                    height: 150.0,
+                    width: 100.0,
+                    fit: BoxFit.fill,
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(10),
+                  child: Text(
+                    '${dataMap["description"]}',
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      fontStyle: FontStyle.normal,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
   }
 
   //endregion
@@ -156,9 +192,23 @@ class DashboardScreen extends State<Dashboard> {
   //endregion
 
   //region Below method is used to navigate user to Add Memories Screen:-
-  navigateUser(Widget screen) => Navigator.pushReplacement(
+  navigateUser(Widget screen) =>
+      Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => screen),
       );
+
+//endregion
+
+//region Below method is used to get Memories Data:-
+  _getMemoriesData() async {
+    await databaseReference.collection("Memories").get().then((querySnapshot) =>
+        querySnapshot.docs.forEach((result) {
+          print(result.data());
+          setState(() {
+            dataMap = result.data();
+          });
+        }));
+  }
 //endregion
 }
